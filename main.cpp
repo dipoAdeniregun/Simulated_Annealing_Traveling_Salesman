@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
+#include <fstream>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -56,16 +57,37 @@ void neighbourFunction(const std::vector<Coord_t>& state, std::vector<Coord_t>& 
    neighbour[index2] = temp;
 }
 
+void writeStatetoFile(std::ofstream& file, const std::vector<Coord_t>& state, int length){
+    /*
+        write a state of given length to a text file named file
+    */
+    for (size_t i = 0; i < length; i++)
+    {
+        file << state[i].x << "," << state[i].y << std::endl;
+    }
+}
+
 void travelingSalesmanSA(const std::vector<Coord_t>& cities, double (*energyFunction)(const std::vector<Coord_t>&), void (*neighbourFunction)(const std::vector<Coord_t>&, std::vector<Coord_t>&), int maxiter, int innermaxiter){
+    /*
+        Performs the Simulated Annealing. Starts with an initial state which is represented by a list
+        of cities in the order they're visited. At each iteration, the cyrrent state and best state
+        are written to a text file named StateHistory.
+    */
+    
     int currIter = 0;
     int cooling = 100;
     double deltaE;
     double probTransitionAcceptance;
     double chance;
+
+    std::ofstream textFile;
+    textFile.open("StateHistory.txt");
     
     std::vector<Coord_t> state = cities;
     double stateE = energyFunction(cities);
     int length = cities.size();
+
+    textFile << length << std::endl; //text file's first line is the state length
 
     std::vector<Coord_t> neighbour = state;
     double neighbourE = stateE;
@@ -73,6 +95,7 @@ void travelingSalesmanSA(const std::vector<Coord_t>& cities, double (*energyFunc
     std::vector<Coord_t> bestState = state;
     double bestStateE = stateE;
 
+    //keep track of the energy of all states seen as well as the best stte seen at each iteration
     std::vector<double> bestEHistory(maxiter);
     std::vector<double> EHistory(maxiter);
 
@@ -111,12 +134,17 @@ void travelingSalesmanSA(const std::vector<Coord_t>& cities, double (*energyFunc
 
         bestEHistory[currIter-1] = bestStateE;
         EHistory[currIter-1] = stateE;
+
+        //write current state and best state to the file
+        writeStatetoFile(textFile, state, length);
+        writeStatetoFile(textFile, bestState, length);
         
         cooling = 0.9*cooling; //simple cooling function
 
         std::cout << "Outer Iteration: " << currIter << " Energy: " << stateE << std::endl;
     }
     
+    textFile.close();
 }
 
 int main(int argc, char** argv){
@@ -137,24 +165,6 @@ int main(int argc, char** argv){
         cities[i].x = (double) (rand()) / (double) (RAND_MAX);
         cities[i].y = (double) (rand()) / (double) (RAND_MAX);
     }
-
-    // double energy = energyFunction(cities);
-    // std::vector<Coord_t> neighbour(n);
-    // neighbourFunction(cities, neighbour);
-    // double neighbourE = energyFunction(neighbour);
-
-    // for (int i = 0; i < n; i++)
-    // {
-    //     std::cout << "x: " << cities[i].x << " y: " << cities[i].y << std::endl;
-    // }
-    // std::cout << "State has an energy of: " << energy << std::endl;
-
-    // std::cout << "\nFor the neighbour: \n";
-    // for (int i = 0; i < n; i++)
-    // {
-    //     std::cout << "x: " << neighbour[i].x << " y: " << neighbour[i].y << std::endl;
-    // }
-    // std::cout << "Neighbour has an energy of: " << neighbourE << std::endl;
 
     int maxiter = 300;
     int innermaxiter = 1000;
