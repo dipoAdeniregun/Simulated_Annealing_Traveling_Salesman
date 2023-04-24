@@ -65,6 +65,7 @@ void writeStatetoFile(std::ofstream& file, const std::vector<Coord_t>& state, in
     {
         file << state[i].x << "," << state[i].y << std::endl;
     }
+    file << state[0].x << "," << state[0].y << std::endl;
 }
 
 void travelingSalesmanSA(const std::vector<Coord_t>& cities, double (*energyFunction)(const std::vector<Coord_t>&), void (*neighbourFunction)(const std::vector<Coord_t>&, std::vector<Coord_t>&), int maxiter, int innermaxiter){
@@ -88,6 +89,7 @@ void travelingSalesmanSA(const std::vector<Coord_t>& cities, double (*energyFunc
     int length = cities.size();
 
     textFile << length << std::endl; //text file's first line is the state length
+    textFile << maxiter << std::endl;
 
     std::vector<Coord_t> neighbour = state;
     double neighbourE = stateE;
@@ -139,7 +141,7 @@ void travelingSalesmanSA(const std::vector<Coord_t>& cities, double (*energyFunc
         writeStatetoFile(textFile, state, length);
         writeStatetoFile(textFile, bestState, length);
         
-        cooling = 0.9*cooling; //simple cooling function
+        cooling = 0.95*cooling; //simple cooling function
 
         std::cout << "Outer Iteration: " << currIter << " Energy: " << stateE << std::endl;
     }
@@ -153,7 +155,14 @@ int main(int argc, char** argv){
         return 1;
     }
 
+    int circleTest = 1;
     srand (static_cast <unsigned> (time(0)));
+
+    //can pass whether to use cities placed in a circle for testing
+    //defaults to true
+    if(argc == 3){
+        circleTest = atoi(argv[2]);
+    }
 
     int n = atoi(argv[1]);
     std::cout << "Now using simulated annealing to solve the traveling salesman problem for " << n << " cities.\n";
@@ -162,8 +171,17 @@ int main(int argc, char** argv){
 
     //initialize mock data for all our cities
     for(int i = 0; i < n; i++){
-        cities[i].x = (double) (rand()) / (double) (RAND_MAX);
-        cities[i].y = (double) (rand()) / (double) (RAND_MAX);
+        if(circleTest){ //place cities randomly around a circle
+            double theta = (double) (rand()) *  2.0 * M_PI/ (double) (RAND_MAX);
+            cities[i].x = cos(theta); 
+            cities[i].y = sin(theta);   
+        }
+
+        else{
+            cities[i].x = (double) (rand()) / (double) (RAND_MAX); 
+            cities[i].y = (double) (rand()) / (double) (RAND_MAX);
+        }
+        
     }
 
     int maxiter = 300;
